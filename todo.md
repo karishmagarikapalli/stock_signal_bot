@@ -21,33 +21,33 @@
 - [ ] Write unit tests for corroboration logic
 
 ## Phase 3: Decision Engine
-- [ ] Implement rules-based signal generation (BUY/SELL/HOLD)
-- [ ] Create signal confidence scoring
-- [ ] Implement keyword extraction and entity recognition
-- [ ] Add historical signal tracking and performance metrics
-- [ ] Create signal filtering based on market conditions
-- [ ] Implement stock watchlist management
-- [ ] Add signal history and analytics
+- [x] Implement rules-based signal generation (BUY/SELL/HOLD)
+- [x] Create signal confidence scoring
+- [x] Implement keyword extraction and entity recognition
+- [x] Add historical signal tracking and performance metrics
+- [x] Create signal filtering based on market conditions
+- [x] Implement stock watchlist management
+- [x] Add signal history and analytics
 - [ ] Write unit tests for decision engine
 
 ## Phase 4: Notifications & Delivery
-- [ ] Integrate ntfy.sh push notification service
-- [ ] Implement message formatting with context
-- [ ] Add priority-based alert delivery
-- [ ] Create notification templates
-- [ ] Implement alert deduplication (prevent spam)
-- [ ] Add notification history tracking
+- [x] Integrate ntfy.sh push notification service
+- [x] Implement message formatting with context
+- [x] Add priority-based alert delivery
+- [x] Create notification templates
+- [x] Implement alert deduplication (prevent spam)
+- [x] Add notification history tracking
 - [ ] Test notifications on Android/iOS
 - [ ] Write unit tests for notification service
 
 ## Phase 5: Scheduling & Deployment
-- [ ] Set up GitHub Actions workflow for scheduled runs
-- [ ] Configure 1-2 minute execution intervals
-- [ ] Implement error handling and retry logic
-- [ ] Add logging and monitoring
+- [x] Set up GitHub Actions workflow for scheduled runs
+- [x] Configure 1-2 minute execution intervals
+- [x] Implement error handling and retry logic
+- [x] Add logging and monitoring
 - [ ] Create health check endpoints
-- [ ] Set up environment variable management
-- [ ] Document deployment process
+- [x] Set up environment variable management
+- [x] Document deployment process
 - [ ] Write integration tests
 
 ## Phase 6: Optimization & Hardening
