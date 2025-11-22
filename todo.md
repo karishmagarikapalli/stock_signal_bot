@@ -16,9 +16,9 @@
 - [x] Implement multi-source corroboration (require 2+ sources)
 - [x] Add sentiment score validation (threshold-based)
 - [x] Create signal correlation logic
-- [ ] Implement news source legitimacy scoring
+- [x] Implement news source legitimacy scoring
 - [ ] Add RSS feed integration (SEC EDGAR, Seeking Alpha)
-- [ ] Write unit tests for corroboration logic
+- [x] Write unit tests for corroboration logic
 
 ## Phase 3: Decision Engine
 - [x] Implement rules-based signal generation (BUY/SELL/HOLD)
@@ -28,7 +28,7 @@
 - [x] Create signal filtering based on market conditions
 - [x] Implement stock watchlist management
 - [x] Add signal history and analytics
-- [ ] Write unit tests for decision engine
+- [x] Write unit tests for decision engine
 
 ## Phase 4: Notifications & Delivery
 - [x] Integrate ntfy.sh push notification service
@@ -37,8 +37,8 @@
 - [x] Create notification templates
 - [x] Implement alert deduplication (prevent spam)
 - [x] Add notification history tracking
-- [ ] Test notifications on Android/iOS
-- [ ] Write unit tests for notification service
+- [x] Test notifications on Android/iOS
+- [x] Write unit tests for notification service
 
 ## Phase 5: Scheduling & Deployment
 - [x] Set up GitHub Actions workflow for scheduled runs
