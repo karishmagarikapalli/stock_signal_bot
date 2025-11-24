@@ -82,3 +82,34 @@
 
 ## Completed Items
 (None yet - project just initialized)
+
+
+## Phase 7: Signal Validation & Performance Tracking
+- [x] Create signal validation framework with backtesting engine
+- [x] Implement price tracking for signal entry points
+- [x] Calculate win rate and accuracy metrics
+- [x] Add performance dashboard showing signal ROI
+- [x] Create signal performance report generator
+- [x] Implement historical signal replay system
+- [x] Add confidence vs accuracy correlation analysis
+- [x] Write tests for validation engine
+
+## Phase 8: Additional Data Sources
+- [x] Integrate Truth Social API for Trump's posts
+- [x] Add insider trading (SEC Form 4) data source
+- [ ] Implement unusual options activity detection
+- [ ] Add short seller reports integration
+- [x] Create source reliability scoring system
+- [x] Add weighted multi-source corroboration
+- [x] Implement source-specific signal weighting
+- [ ] Write tests for new data sources
+
+## Phase 9: Advanced Features
+- [ ] Add portfolio tracking and position management
+- [ ] Implement risk management rules
+- [ ] Create custom alert thresholds per symbol
+- [ ] Add signal filtering by market conditions
+- [ ] Implement machine learning signal optimization
+- [ ] Add Slack/Discord webhook notifications
+- [ ] Create API endpoint for signal queries
+- [ ] Add web UI for performance analytics
