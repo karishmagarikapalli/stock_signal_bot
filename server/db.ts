@@ -215,12 +215,12 @@ export async function createNewsItem(item: {
     url: item.url,
     sourceId: item.sourceId,
     publishedAt: item.publishedAt,
-    sentimentScore: item.sentimentScore ? item.sentimentScore.toString() : null,
+    sentimentScore: item.sentimentScore != null ? item.sentimentScore.toString() : null,
     sentimentSource: item.sentimentSource || null,
     keywords: item.keywords ? JSON.stringify(item.keywords) : null,
     entities: item.entities ? JSON.stringify(item.entities) : null,
     isProcessed: false,
-  });
+  }).onDuplicateKeyUpdate({ set: { externalId: item.externalId } });
 
   const result = await db.select().from(newsItems).where(eq(newsItems.externalId, item.externalId)).limit(1);
   return result[0];
@@ -273,20 +273,20 @@ export async function createSignal(signal: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  await db.insert(signals).values({
+  const [{ id }] = await db.insert(signals).values({
     stockId: signal.stockId,
     signalType: signal.signalType,
     confidence: signal.confidence.toString(),
     sources: JSON.stringify(signal.sources),
     newsItemIds: signal.newsItemIds ? JSON.stringify(signal.newsItemIds) : null,
     reasoning: signal.reasoning || null,
-    sentimentAverage: signal.sentimentAverage ? signal.sentimentAverage.toString() : null,
-    priceAtSignal: signal.priceAtSignal ? signal.priceAtSignal.toString() : null,
+    sentimentAverage: signal.sentimentAverage != null ? signal.sentimentAverage.toString() : null,
+    priceAtSignal: signal.priceAtSignal != null ? signal.priceAtSignal.toString() : null,
     isAlerted: false,
     isDuplicate: false,
-  });
+  }).$returningId();
 
-  const result = await db.select().from(signals).orderBy(desc(signals.id)).limit(1);
+  const result = await db.select().from(signals).where(eq(signals.id, id)).limit(1);
   return result[0];
 }
 
@@ -302,7 +302,7 @@ export async function getRecentSignals(hours: number = 1): Promise<Signal[]> {
     .orderBy(desc(signals.createdAt));
 }
 
-export async function getUnalerredSignals(): Promise<Signal[]> {
+export async function getUnalertedSignals(): Promise<Signal[]> {
   const db = await getDb();
   if (!db) return [];
 
@@ -312,7 +312,7 @@ export async function getUnalerredSignals(): Promise<Signal[]> {
     .orderBy(desc(signals.createdAt));
 }
 
-export async function markSignalAlerted(id: number, alertId: number): Promise<void> {
+export async function markSignalAlerted(id: number): Promise<void> {
   const db = await getDb();
   if (!db) return;
 
@@ -340,16 +340,16 @@ export async function createAlert(alert: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  await db.insert(alerts).values({
+  const [{ id }] = await db.insert(alerts).values({
     signalId: alert.signalId,
     title: alert.title,
     message: alert.message,
     priority: alert.priority || "default",
     ntfyTopic: alert.ntfyTopic || null,
     delivered: true,
-  });
+  }).$returningId();
 
-  const result = await db.select().from(alerts).orderBy(desc(alerts.id)).limit(1);
+  const result = await db.select().from(alerts).where(eq(alerts.id, id)).limit(1);
   return result[0];
 }
 
@@ -401,23 +401,36 @@ export async function canMakeRequest(apiName: string): Promise<boolean> {
   const limit = await db.select().from(apiRateLimits).where(eq(apiRateLimits.apiName, apiName)).limit(1);
   if (limit.length === 0) return true;
 
-  const current = limit[0];
+  const current = { ...limit[0], ...currentWindows(limit[0]) };
   return current.requestsToday < current.dailyLimit && current.requestsThisMinute < current.minuteLimit;
+}
+
+// Counters are stored cumulatively; zero them when the UTC day / minute has rolled over.
+function currentWindows(row: ApiRateLimit, now: Date = new Date()) {
+  const sameDay = row.lastResetDay.toISOString().slice(0, 10) === now.toISOString().slice(0, 10);
+  const sameMinute = now.getTime() - row.lastResetMinute.getTime() < 60_000;
+  return {
+    requestsToday: sameDay ? row.requestsToday : 0,
+    requestsThisMinute: sameMinute ? row.requestsThisMinute : 0,
+    lastResetDay: sameDay ? row.lastResetDay : now,
+    lastResetMinute: sameMinute ? row.lastResetMinute : now,
+  };
 }
 
 export async function recordRequest(apiName: string): Promise<void> {
   const db = await getDb();
   if (!db) return;
 
-  // Get current values
   const current = await db.select().from(apiRateLimits).where(eq(apiRateLimits.apiName, apiName)).limit(1);
   if (current.length === 0) return;
 
-  // Increment counters
+  const w = currentWindows(current[0]);
   await db.update(apiRateLimits)
     .set({
-      requestsToday: current[0].requestsToday + 1,
-      requestsThisMinute: current[0].requestsThisMinute + 1,
+      requestsToday: w.requestsToday + 1,
+      requestsThisMinute: w.requestsThisMinute + 1,
+      lastResetDay: w.lastResetDay,
+      lastResetMinute: w.lastResetMinute,
     })
     .where(eq(apiRateLimits.apiName, apiName));
 }
@@ -435,13 +448,13 @@ export async function createSignalHistory(history: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  await db.insert(signalHistory).values({
+  const [{ id }] = await db.insert(signalHistory).values({
     signalId: history.signalId,
     stockSymbol: history.stockSymbol,
     signalType: history.signalType,
     priceAtSignal: history.priceAtSignal.toString(),
-  });
+  }).$returningId();
 
-  const result = await db.select().from(signalHistory).orderBy(desc(signalHistory.id)).limit(1);
+  const result = await db.select().from(signalHistory).where(eq(signalHistory.id, id)).limit(1);
   return result[0];
 }

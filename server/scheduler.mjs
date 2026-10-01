@@ -22,8 +22,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Parse command line arguments
 const args = process.argv.slice(2);
-let interval = 120; // Default: 2 minutes
-let symbols = ['AAPL', 'MSFT', 'GOOGL', 'TSLA', 'AMZN']; // Default symbols
+let interval = 1800; // 30 minutes; feeds are keyless, this just keeps us polite to Google/Yahoo
+let symbols = ['AAPL', 'MSFT', 'NVDA'];
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--interval') {

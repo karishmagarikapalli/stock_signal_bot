@@ -2,7 +2,6 @@ import {
   createSignal,
   createAlert,
   getRecentSignals,
-  markSignalAsDuplicate,
   getNewsItemsByStock,
 } from "../db";
 import { NtfyClient } from "../apis/ntfy";
@@ -145,12 +144,11 @@ export class SignalEngine {
     try {
       // Check for duplicates
       const duplicate = await this.checkForDuplicate(input.stockId, signal.type);
-      if (duplicate.isDuplicate && duplicate.duplicateOfId) {
+      if (duplicate.isDuplicate) {
         console.log(
-          `[SignalEngine] Duplicate signal detected for ${input.stockSymbol}, marking as duplicate`
+          `[SignalEngine] Duplicate ${signal.type} signal for ${input.stockSymbol} (of #${duplicate.duplicateOfId}); skipping`
         );
-        // Mark the new signal as duplicate
-        // Note: We'll create it first, then mark it
+        return null;
       }
 
       // Create the signal in database
@@ -164,12 +162,6 @@ export class SignalEngine {
         sentimentAverage: input.sentimentAverage,
         priceAtSignal: input.priceAtSignal,
       });
-
-      // Mark as duplicate if needed
-      if (duplicate.isDuplicate && duplicate.duplicateOfId) {
-        await markSignalAsDuplicate(dbSignal.id, duplicate.duplicateOfId);
-        return null; // Don't alert on duplicates
-      }
 
       // Send notification
       const notificationSent = await ntfyClient.sendStockSignal(

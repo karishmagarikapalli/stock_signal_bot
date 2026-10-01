@@ -132,7 +132,9 @@ export class MarketAuxClient {
       const response = await this.client.get("/news/all", {
         params: {
           api_token: this.apiKey,
-          entities: entity,
+          symbols: entity,
+          filter_entities: true,
+          language: "en",
           limit,
           page,
         },

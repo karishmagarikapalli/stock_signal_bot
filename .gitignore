@@ -14,6 +14,9 @@ build/
 .env.test.local
 .env.production.local
 
+# Local ingestion state (dedup + API quota)
+.signal-state.json
+
 # IDE and editor files
 .vscode/
 .idea/

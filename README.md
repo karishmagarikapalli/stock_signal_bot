@@ -4,24 +4,24 @@ A real-time stock market notification system that analyzes news from multiple le
 
 ## Features
 
-- **Multi-Source News Aggregation**: Fetches news from Finnhub and MarketAux
-- **Sentiment Analysis**: AI-powered sentiment scoring with confidence metrics
-- **Signal Corroboration**: Requires 2+ sources before generating alerts to prevent false positives
-- **Real-Time Notifications**: Push notifications via ntfy.sh with <5 second latency
+- **Multi-Source News Aggregation**: Google News RSS + Yahoo Finance RSS (public feeds, no API keys)
+- **Sentiment Analysis**: VADER, run locally (open source, no external calls)
+- **Signal Corroboration**: Requires 2+ distinct publishers agreeing on direction before alerting
+- **Real-Time Notifications**: Push notifications via ntfy (open source; ntfy.sh or self-hosted)
 - **Signal Deduplication**: Prevents alert spam with intelligent deduplication
 - **Admin Dashboard**: Monitor signals, alerts, and API usage in real-time
-- **100% Free**: No subscription fees, uses only free tier APIs
+- **100% Free and Open**: No accounts, no API keys, no paid tiers
 
 ## Architecture
 
 ```
-Data Sources (Finnhub, MarketAux)
+Data Sources (Google News RSS, Yahoo Finance RSS)
            ↓
     Ingestion Service
            ↓
-   Signal Engine (Corroboration)
+   Local sentiment (VADER) + Signal Engine (Corroboration)
            ↓
-   Notification Service (ntfy.sh)
+   Notification Service (ntfy)
            ↓
      User Device (Push Notification)
 ```
@@ -31,36 +31,26 @@ Data Sources (Finnhub, MarketAux)
 ### Prerequisites
 
 - Node.js 18+ and pnpm
-- API keys for:
-  - **Finnhub**: https://finnhub.io/register (free tier: 60 calls/minute)
-  - **MarketAux**: https://www.marketaux.com/ (free tier: 100 requests/day)
-  - **ntfy.sh**: No registration needed, just pick a topic name
+- An ntfy topic name: no registration, but topics are public, so pick something hard to guess
 
 ### Installation
 
 ```bash
-# Clone and install
-git clone https://github.com/YOUR_USERNAME/stock_signal_bot.git
-cd stock_signal_bot
 pnpm install
 
-# Configure environment variables
-# Create .env.local with your API keys:
-# FINNHUB_API_KEY=your_key_here
-# MARKETAUX_API_KEY=your_key_here
-# NTFY_TOPIC=stock-signals-your-username
+# .env (only one value is required)
+# NTFY_TOPIC=stock-signals-<random-string>
+# NTFY_SERVER=https://ntfy.sh          # optional, or your self-hosted ntfy
 ```
 
 ### Test Locally
 
 ```bash
-# Run the ingestion service once
-node server/ingestion.mjs --symbols AAPL,MSFT,GOOGL
+# Dry run: fetch, score and print signals without notifying
+DRY_RUN=1 node server/ingestion.mjs --symbols AAPL,MSFT,NVDA
 
-# You should see:
-# [Ingestion] Processing AAPL...
-# [Ingestion] Signal generated for AAPL: BUY
-# [Ingestion] Notification sent for AAPL: BUY
+# Real run
+node server/ingestion.mjs --symbols AAPL,MSFT,NVDA
 ```
 
 Check your ntfy.sh topic for the notification:
@@ -81,29 +71,30 @@ git push -u origin main
 
 2. Add GitHub Secrets:
    - Go to Settings → Secrets and variables → Actions
-   - Add: `FINNHUB_API_KEY`, `MARKETAUX_API_KEY`, `NTFY_TOPIC`
+   - Add: `NTFY_TOPIC`
 
 3. Create `.github/workflows/ingestion.yml`:
 ```yaml
 name: Stock Signal Ingestion
 on:
   schedule:
-    - cron: '*/2 * * * *'  # Every 2 minutes
+    - cron: '*/30 * * * *'  # Every 30 minutes
   workflow_dispatch:
 
 jobs:
   ingest:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          node-version: '18'
-      - run: pnpm install
-      - run: node server/ingestion.mjs --symbols AAPL,MSFT,GOOGL,TSLA,AMZN
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: pnpm install --frozen-lockfile
+      - run: node server/ingestion.mjs --symbols AAPL,MSFT,NVDA
         env:
-          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
-          MARKETAUX_API_KEY: ${{ secrets.MARKETAUX_API_KEY }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
 ```
 

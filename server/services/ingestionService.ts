@@ -186,19 +186,17 @@ export class IngestionService {
         }
       }
 
-      // Store MarketAux news and extract sentiment
+      // Store MarketAux news and extract sentiment for this symbol only
       const marketauxNewsIds: number[] = [];
       const sentiments: number[] = [];
+      const scoredSources: Array<{ source: string; score: number }> = [];
 
       for (const article of marketauxNews) {
         try {
-          // Extract sentiment from entities
-          let articleSentiment = 0;
-          if (article.entities && article.entities.length > 0) {
-            articleSentiment =
-              article.entities.reduce((sum, e) => sum + e.sentiment_score, 0) /
-              article.entities.length;
-          }
+          const entity = (article.entities || []).find(
+            e => e.symbol?.toUpperCase() === symbol.toUpperCase() && typeof e.sentiment_score === "number"
+          );
+          const articleSentiment = entity?.sentiment_score;
 
           const newsItem = await createNewsItem({
             externalId: `marketaux-${article.uuid}`,
@@ -218,7 +216,10 @@ export class IngestionService {
           });
 
           marketauxNewsIds.push(newsItem.id);
-          sentiments.push(articleSentiment);
+          if (articleSentiment !== undefined) {
+            sentiments.push(articleSentiment);
+            scoredSources.push({ source: article.source, score: articleSentiment });
+          }
           stats.newsProcessed++;
         } catch (error) {
           console.warn(`[IngestionService] Error storing MarketAux article:`, error);
@@ -226,8 +227,12 @@ export class IngestionService {
       }
 
       // Generate signal if we have sufficient data
-      if (finnhubNewsIds.length > 0 && marketauxNewsIds.length > 0) {
+      if (finnhubNewsIds.length > 0 && sentiments.length > 0) {
         const compositeSentiment = this.signalEngine.calculateCompositeSentiment(sentiments);
+        const direction = Math.sign(compositeSentiment);
+        const agreeingSources = new Set(
+          scoredSources.filter(s => direction !== 0 && Math.sign(s.score) === direction).map(s => s.source)
+        ).size;
 
         const signalInput: SignalInput = {
           stockId,
@@ -243,19 +248,19 @@ export class IngestionService {
             ...marketauxNews.map((n, i) => ({
               id: marketauxNewsIds[i],
               title: n.title,
-              sentiment: sentiments[i] || 0,
+              sentiment: n.entities?.find(e => e.symbol?.toUpperCase() === symbol.toUpperCase())?.sentiment_score ?? 0,
               source: "MarketAux",
             })),
           ],
           sentimentAverage: compositeSentiment,
-          sourceCount: 2, // We have 2 sources: Finnhub + MarketAux
+          sourceCount: agreeingSources, // distinct publishers agreeing on direction
           eventType: "news",
         };
 
         // Generate signal
         const signal = this.signalEngine.generateSignal(signalInput);
 
-        if (signal && this.signalEngine.validateSignalQuality(signal, 2)) {
+        if (signal && this.signalEngine.validateSignalQuality(signal, agreeingSources)) {
           // Create and alert signal
           const result = await this.signalEngine.createAndAlertSignal(
             signalInput,

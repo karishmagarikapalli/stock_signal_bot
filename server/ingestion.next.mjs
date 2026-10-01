@@ -53,8 +53,6 @@ const MIN_SCORED_HEADLINES = Number(process.env.MIN_SCORED_HEADLINES ?? 3);
 const DEDUP_WINDOW_MS = Number(process.env.DEDUP_WINDOW_MINUTES ?? 60) * 60 * 1000;
 const STATE_FILE = path.resolve(process.env.SIGNAL_STATE_FILE ?? '.signal-state.json');
 const NEUTRAL_BAND = 0.05; // VADER's own neutral cutoff for the compound score
-// Auto-generated 13F holdings posts ("X Shares Bought by Y") say nothing about the company.
-const NOISE = /\b(shares|stake|position|holdings?)\b.*\b(bought|sold|purchased|acquired|raised|lowered|trimmed|boosted|increased|decreased|cut)\b.*\bby\b|\b(acquires|sells|buys|trims|boosts|raises|lowers)\b.*\b(shares|stake|position|holdings?)\b in\b/i;
 
 const http = axios.create({
   timeout: 10000,
@@ -124,7 +122,7 @@ async function fetchHeadlines(symbol) {
     }
     for (const h of r.value) {
       const key = h.title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-      if (!key || seen.has(key) || NOISE.test(h.title) || Date.now() - h.publishedAt.getTime() > LOOKBACK_MS) continue;
+      if (!key || seen.has(key) || Date.now() - h.publishedAt.getTime() > LOOKBACK_MS) continue;
       seen.add(key);
       headlines.push(h);
     }
@@ -157,7 +155,7 @@ function generateSignal(sentiment, agreeingSources, scoredCount) {
 }
 
 async function sendNotification(symbol, signal, topHeadlines) {
-  const emoji = { BUY: '📈', SELL: '📉' }[signal.signalType];
+  const emojiTag = { BUY: 'chart_with_upwards_trend', SELL: 'chart_with_downwards_trend' }[signal.signalType];
   const message = [
     `Confidence: ${(signal.confidence * 100).toFixed(0)}%`,
     signal.reasoning,
@@ -172,9 +170,9 @@ async function sendNotification(symbol, signal, topHeadlines) {
   try {
     const response = await http.post(`${NTFY_SERVER}/${encodeURIComponent(NTFY_TOPIC)}`, message, {
       headers: {
-        Title: `${emoji} ${signal.signalType} Signal: ${symbol}`,
+        Title: `${signal.signalType} Signal: ${symbol}`,
         Priority: signal.confidence > 0.8 ? 'high' : 'default',
-        Tags: `${signal.signalType.toLowerCase()},stock,${symbol.toLowerCase()}`,
+        Tags: `${emojiTag},${symbol.toLowerCase()}`,
       },
     });
     console.log(`[Ingestion] Notification sent for ${symbol}: ${signal.signalType}`);
