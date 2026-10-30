@@ -40,10 +40,6 @@ for (let i = 0; i < args.length; i++) {
 
 const DRY_RUN = process.env.DRY_RUN === '1';
 const NTFY_TOPIC = process.env.NTFY_TOPIC;
-if (!NTFY_TOPIC && !DRY_RUN) {
-  console.error('[Ingestion] Missing NTFY_TOPIC (or set DRY_RUN=1)');
-  process.exit(1);
-}
 
 const NTFY_SERVER = (process.env.NTFY_SERVER ?? 'https://ntfy.sh').replace(/\/$/, '');
 const LOOKBACK_MS = Number(process.env.LOOKBACK_HOURS ?? 24) * 60 * 60 * 1000;
@@ -186,6 +182,9 @@ async function sendNotification(symbol, signal, topHeadlines) {
 }
 
 async function main() {
+  if (!NTFY_TOPIC && !DRY_RUN) {
+    throw new Error('Missing NTFY_TOPIC (or set DRY_RUN=1)');
+  }
   console.log(`[Ingestion] Starting ingestion for symbols: ${symbols.join(', ')}${DRY_RUN ? ' (dry run)' : ''}`);
   let totalSignals = 0;
   let totalAlerts = 0;
@@ -226,7 +225,11 @@ async function main() {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
-main().catch((error) => {
-  console.error('[Ingestion] Fatal error:', error);
-  process.exit(1);
-});
+if (process.env.NODE_ENV !== 'test') {
+  main().catch((error) => {
+    console.error('[Ingestion] Fatal error:', error);
+    process.exit(1);
+  });
+}
+
+export { fetchHeadlines, generateSignal, http, scoreHeadlines };

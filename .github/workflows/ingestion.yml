@@ -1,0 +1,55 @@
+name: Stock Signal Ingestion
+
+permissions:
+  contents: read
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      symbols:
+        description: Comma-separated symbols to scan (defaults to the configured watchlist)
+        required: false
+        type: string
+      dry_run:
+        description: Print signals without sending ntfy alerts
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Restore deduplication state
+        uses: actions/cache/restore@v4
+        with:
+          path: .signal-state.json
+          key: signal-state-${{ github.run_id }}
+          restore-keys: |
+            signal-state-
+      - name: Run ingestion
+        run: node server/ingestion.mjs --symbols "$SYMBOLS"
+        env:
+          SYMBOLS: ${{ inputs.symbols || 'AAPL,MSFT,NVDA,TSLA,SPY' }}
+          BUY_THRESHOLD: "0.5"
+          MIN_SCORED_HEADLINES: "5"
+          MIN_AGREEING_SOURCES: "3"
+          SIGNAL_STATE_FILE: .signal-state.json
+          DRY_RUN: ${{ github.event_name == 'schedule' && '1' || (inputs.dry_run && '1' || '0') }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+      - name: Save deduplication state
+        uses: actions/cache/save@v4
+        with:
+          path: .signal-state.json
+          key: signal-state-${{ github.run_id }}
