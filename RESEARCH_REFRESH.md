@@ -18,6 +18,13 @@ matrices/per-class precision/recall/F1 and macro-F1, and timestamped price joins
 Also implemented: a fail-closed Actions delivery gate. Not implemented: FinBERT
 inference, real-price backtesting, SEC ingestion, or a statistical-arbitrage engine.
 
+Offline extension reviewed 2026-10-30: [OFFLINE_EXPERIMENTS.md](OFFLINE_EXPERIMENTS.md)
+specifies the isolated executable walk-forward, costs/drawdown/baselines,
+external FinBERT score-import contract, and local official-shaped SEC fixture
+parsers. These additions supersede the earlier slice's missing-control notes
+only to the extent explicitly documented there. They do not implement FinBERT
+inference, live SEC collection, or real-data validation; readiness stays false.
+
 ## Data Access Is Not A License
 
 | Source | Current published access | Research restriction |

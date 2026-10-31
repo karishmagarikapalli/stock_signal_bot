@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "synthetic": true,
+  "scoreSource": "synthetic",
+  "fitOptions": { "thresholds": [0.05, 0.25, 0.5], "embargoMs": 86400000 },
+  "priceOptions": { "horizonMs": 3600000, "latencyMs": 1000, "maxEntryDelayMs": 60000, "maxExitDelayMs": 0, "benchmarkSymbol": "MARKET" },
+  "costs": { "commissionBps": 2, "feesBps": 1, "halfSpreadBps": 5, "slippageBps": 2 },
+  "windows": [
+    { "testStart": "2025-01-10T00:00:00Z", "testEnd": "2025-01-20T00:00:00Z" },
+    { "testStart": "2025-01-20T00:00:00Z", "testEnd": "2025-01-30T00:00:00Z" }
+  ],
+  "events": [
+    { "id": "train-neutral", "eventId": "train-neutral", "symbol": "FAKE", "text": "Invented routine update.", "label": "neutral", "score": 0.2, "availableAt": "2025-01-02T14:30:00Z", "outcomeEndAt": "2025-01-02T15:31:00Z" },
+    { "id": "train-positive", "eventId": "train-positive", "symbol": "FAKE", "text": "Invented favorable result.", "label": "positive", "score": 0.8, "availableAt": "2025-01-03T14:30:00Z", "outcomeEndAt": "2025-01-03T15:31:00Z" },
+    { "id": "train-negative", "eventId": "train-negative", "symbol": "FAKE", "text": "Invented unfavorable result.", "label": "negative", "score": -0.8, "availableAt": "2025-01-04T14:30:00Z", "outcomeEndAt": "2025-01-04T15:31:00Z" },
+    { "id": "positive-but-loss", "eventId": "loss-family", "symbol": "FAKE", "text": "Invented good news with a later price loss.", "label": "positive", "score": 0.9, "availableAt": "2025-01-11T14:30:00Z", "outcomeEndAt": "2025-01-11T15:31:00Z" },
+    { "id": "loss-copy", "eventId": "loss-family", "symbol": "FAKE", "text": "Invented duplicate of the same event.", "label": "positive", "score": 0.9, "availableAt": "2025-01-11T14:30:01Z", "outcomeEndAt": "2025-01-11T15:31:00Z" },
+    { "id": "neutral-but-gain", "eventId": "neutral-gain", "symbol": "FAKE", "text": "Invented routine notice before a price gain.", "label": "neutral", "score": 0.1, "availableAt": "2025-01-12T14:30:00Z", "outcomeEndAt": "2025-01-12T15:31:00Z" },
+    { "id": "missing-price", "eventId": "missing-price", "symbol": "MISSING", "text": "Invented missing price example.", "label": "negative", "score": -0.8, "availableAt": "2025-01-13T14:30:00Z", "outcomeEndAt": "2025-01-13T15:31:00Z" },
+    { "id": "later-loss", "eventId": "later-loss", "symbol": "FAKE", "text": "Invented favorable announcement with another price loss.", "label": "positive", "score": 0.7, "availableAt": "2025-01-21T14:30:00Z", "outcomeEndAt": "2025-01-21T15:31:00Z" }
+  ],
+  "prices": [
+    { "symbol": "FAKE", "at": "2025-01-11T14:30:00Z", "price": 1 },
+    { "symbol": "FAKE", "at": "2025-01-11T14:31:00Z", "price": 100 },
+    { "symbol": "FAKE", "at": "2025-01-11T15:31:00Z", "price": 90 },
+    { "symbol": "MARKET", "at": "2025-01-11T14:31:00Z", "price": 200 },
+    { "symbol": "MARKET", "at": "2025-01-11T15:31:00Z", "price": 202 },
+    { "symbol": "FAKE", "at": "2025-01-12T14:31:00Z", "price": 100 },
+    { "symbol": "FAKE", "at": "2025-01-12T15:31:00Z", "price": 110 },
+    { "symbol": "MARKET", "at": "2025-01-12T14:31:00Z", "price": 200 },
+    { "symbol": "MARKET", "at": "2025-01-12T15:31:00Z", "price": 198 },
+    { "symbol": "FAKE", "at": "2025-01-21T14:31:00Z", "price": 100 },
+    { "symbol": "FAKE", "at": "2025-01-21T15:31:00Z", "price": 95 }
+  ]
+}

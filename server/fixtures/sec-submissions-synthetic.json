@@ -1,0 +1,14 @@
+{
+  "synthetic": true,
+  "cik": "0000000001",
+  "name": "Invented Fixture Issuer",
+  "filings": { "recent": {
+    "accessionNumber": ["0000000001-25-000001", "0000000001-25-000002", "0000000001-25-000003"],
+    "filingDate": ["2025-01-02", "2025-01-03", "2025-01-04"],
+    "reportDate": ["2025-01-01", "2025-01-02", "2025-01-02"],
+    "acceptanceDateTime": ["2025-01-02T18:00:00Z", "2025-01-03T18:00:00Z", "2025-01-04T18:00:00Z"],
+    "form": ["4", "8-K", "8-K/A"],
+    "primaryDocument": ["ownership.xml", "invented8k.htm", "invented8ka.htm"],
+    "items": ["", "2.02,5.02,9.01", "2.02"]
+  } }
+}

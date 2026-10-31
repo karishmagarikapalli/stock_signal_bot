@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "node server/ingestion.mjs",
     "start": "node server/scheduler.mjs",
-    "check": "node --check server/ingestion.mjs && node --check server/scheduler.mjs && node --check server/alert-readiness.mjs && node --check server/research-evaluation.mjs && tsc --noEmit -p tsconfig.standalone.json",
+    "check": "node --check server/ingestion.mjs && node --check server/scheduler.mjs && node --check server/alert-readiness.mjs && node --check server/research-evaluation.mjs && node --check server/experiments/walk-forward.mjs && node --check server/experiments/return-metrics.mjs && node --check server/experiments/finbert-import.mjs && node --check server/experiments/sec-local.mjs && node --check server/experiments/run.mjs && tsc --noEmit -p tsconfig.standalone.json",
     "check:legacy": "tsc --noEmit",
     "format": "prettier --write .",
-    "test": "vitest run server/ingestion.test.ts server/alert-readiness.test.ts server/research-evaluation.test.ts",
+    "test": "vitest run server/ingestion.test.ts server/alert-readiness.test.ts server/research-evaluation.test.ts server/experiments",
     "research:evaluate": "node server/research-evaluation.mjs",
+    "research:walk-forward": "node server/experiments/run.mjs",
+    "research:test": "vitest run server/experiments",
     "test:legacy": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate"
   },

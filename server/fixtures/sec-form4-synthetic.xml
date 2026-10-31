@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ownershipDocument>
+  <schemaVersion>X0508</schemaVersion>
+  <documentType>4</documentType>
+  <periodOfReport>2025-01-01</periodOfReport>
+  <aff10b5One>1</aff10b5One>
+  <issuer><issuerCik>0000000001</issuerCik><issuerName>Invented Fixture Issuer</issuerName><issuerTradingSymbol>FAKE</issuerTradingSymbol></issuer>
+  <reportingOwner>
+    <reportingOwnerId><rptOwnerCik>0000000002</rptOwnerCik><rptOwnerName>Invented Fixture Owner</rptOwnerName></reportingOwnerId>
+    <reportingOwnerRelationship><isDirector>0</isDirector><isOfficer>1</isOfficer><isTenPercentOwner>0</isTenPercentOwner><isOther>0</isOther><officerTitle>Invented Officer</officerTitle></reportingOwnerRelationship>
+  </reportingOwner>
+  <nonDerivativeTable>
+    <nonDerivativeTransaction>
+      <securityTitle><value>Common Stock</value></securityTitle>
+      <transactionDate><value>2025-01-01</value></transactionDate>
+      <transactionCoding><transactionFormType>4</transactionFormType><transactionCode>S</transactionCode><equitySwapInvolved>0</equitySwapInvolved></transactionCoding>
+      <transactionAmounts><transactionShares><value>10.5</value></transactionShares><transactionPricePerShare><value>12.00</value><footnoteId id="F1"/></transactionPricePerShare><transactionAcquiredDisposedCode><value>D</value></transactionAcquiredDisposedCode></transactionAmounts>
+      <postTransactionAmounts><sharesOwnedFollowingTransaction><value>100</value></sharesOwnedFollowingTransaction></postTransactionAmounts>
+      <ownershipNature><directOrIndirectOwnership><value>D</value></directOrIndirectOwnership></ownershipNature>
+    </nonDerivativeTransaction>
+  </nonDerivativeTable>
+  <derivativeTable>
+    <derivativeTransaction>
+      <securityTitle><value>Invented Option</value></securityTitle>
+      <conversionOrExercisePrice><value>5.00</value></conversionOrExercisePrice>
+      <transactionDate><value>2025-01-01</value></transactionDate>
+      <transactionCoding><transactionFormType>4</transactionFormType><transactionCode>M</transactionCode><equitySwapInvolved>0</equitySwapInvolved></transactionCoding>
+      <transactionAmounts><transactionShares><value>2</value></transactionShares><transactionPricePerShare><footnoteId id="F1"/></transactionPricePerShare><transactionAcquiredDisposedCode><value>D</value></transactionAcquiredDisposedCode></transactionAmounts>
+      <postTransactionAmounts><sharesOwnedFollowingTransaction><value>8</value></sharesOwnedFollowingTransaction></postTransactionAmounts>
+      <ownershipNature><directOrIndirectOwnership><value>I</value></directOrIndirectOwnership></ownershipNature>
+    </derivativeTransaction>
+  </derivativeTable>
+  <footnotes><footnote id="F1">Invented synthetic footnote. No actual transaction or directional label.</footnote></footnotes>
+</ownershipDocument>

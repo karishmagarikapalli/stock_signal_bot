@@ -87,6 +87,20 @@ npm.cmd exec --yes --package=pnpm@10.4.1 -- pnpm research:evaluate server/fixtur
 Labels are independently supplied; missing prices are skipped, never zeroed.
 Synthetic metrics validate plumbing only, not real sentiment accuracy or returns.
 
+Deeper experiments are isolated under [server/experiments/run.mjs](server/experiments/run.mjs):
+chronological grouped/purged walk-forward fitting, cost-aware long/cash return
+observations and baselines, externally supplied FinBERT score imports, and local
+SEC submissions/Form 4/8-K metadata parsers. See
+[OFFLINE_EXPERIMENTS.md](OFFLINE_EXPERIMENTS.md) for exact contracts and gaps.
+
+```powershell
+npm.cmd exec --yes --package=pnpm@10.4.1 -- pnpm research:test
+npm.cmd exec --yes --package=pnpm@10.4.1 -- pnpm research:walk-forward server/fixtures/walk-forward-synthetic.json
+```
+
+No FinBERT weights/inference, live SEC collector, real-data backtest, alert,
+trade, or readiness enablement is implemented by these experiments.
+
 ## Deployment And Legacy Code
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
