@@ -13,7 +13,7 @@ on:
         required: false
         type: string
       dry_run:
-        description: Print signals without sending ntfy alerts
+        description: Print signals without sending ntfy alerts (false still requires readiness)
         required: true
         default: true
         type: boolean
@@ -38,6 +38,14 @@ jobs:
           key: signal-state-${{ github.run_id }}
           restore-keys: |
             signal-state-
+      - name: Resolve alert readiness
+        id: readiness
+        run: node server/alert-readiness.mjs
+        env:
+          ALERT_EVENT_NAME: ${{ github.event_name }}
+          LIVE_ALERTS_READY: ${{ vars.LIVE_ALERTS_READY }}
+          DISPATCH_DRY_RUN: ${{ toJSON(inputs.dry_run) }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
       - name: Run ingestion
         run: node server/ingestion.mjs --symbols "$SYMBOLS"
         env:
@@ -46,7 +54,7 @@ jobs:
           MIN_SCORED_HEADLINES: "5"
           MIN_AGREEING_SOURCES: "3"
           SIGNAL_STATE_FILE: .signal-state.json
-          DRY_RUN: ${{ github.event_name == 'schedule' && '1' || (inputs.dry_run && '1' || '0') }}
+          DRY_RUN: ${{ steps.readiness.outputs.dry_run || '1' }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
       - name: Save deduplication state
         uses: actions/cache/save@v4

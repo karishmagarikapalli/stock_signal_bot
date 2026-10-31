@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["server/ingestion.mjs", "server/scheduler.mjs", "server/ingestion.test.ts", "server/alert-readiness.mjs", "server/alert-readiness.test.ts", "server/research-evaluation.mjs", "server/research-evaluation.test.ts"]
+}

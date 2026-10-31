@@ -10,7 +10,7 @@
  * Usage:
  *   node server/ingestion.mjs --symbols AAPL,MSFT,NVDA
  *
- * Environment variables (shell or .env):
+ * Environment variables (shell, .dev.vars, or legacy .env; first value wins):
  *   NTFY_TOPIC            - ntfy topic to publish to (required; pick something hard to guess)
  *   NTFY_SERVER           - ntfy server URL (default https://ntfy.sh)
  *   LOOKBACK_HOURS        - only score headlines newer than this (default 24)
@@ -22,12 +22,16 @@
  *   DRY_RUN               - "1" to log signals without sending notifications
  */
 
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { XMLParser } from 'fast-xml-parser';
 import vader from 'vader-sentiment';
+
+const projectRoot = fileURLToPath(new URL('../', import.meta.url));
+dotenv.config({ path: [path.join(projectRoot, '.dev.vars'), path.join(projectRoot, '.env')], quiet: true });
 
 const args = process.argv.slice(2);
 let symbols = ['AAPL', 'MSFT', 'NVDA'];
@@ -153,7 +157,7 @@ function generateSignal(sentiment, agreeingSources, scoredCount) {
 }
 
 async function sendNotification(symbol, signal, topHeadlines) {
-  const emoji = { BUY: '📈', SELL: '📉' }[signal.signalType];
+  const directionTag = { BUY: 'chart_with_upwards_trend', SELL: 'chart_with_downwards_trend' }[signal.signalType];
   const message = [
     `Confidence: ${(signal.confidence * 100).toFixed(0)}%`,
     signal.reasoning,
@@ -168,9 +172,9 @@ async function sendNotification(symbol, signal, topHeadlines) {
   try {
     const response = await http.post(`${NTFY_SERVER}/${encodeURIComponent(NTFY_TOPIC)}`, message, {
       headers: {
-        Title: `${emoji} ${signal.signalType} Signal: ${symbol}`,
+        Title: `${signal.signalType} Signal: ${symbol}`,
         Priority: signal.confidence > 0.8 ? 'high' : 'default',
-        Tags: `${signal.signalType.toLowerCase()},stock,${symbol.toLowerCase()}`,
+        Tags: `${directionTag},${signal.signalType.toLowerCase()},stock,${symbol.toLowerCase()}`,
       },
     });
     console.log(`[Ingestion] Notification sent for ${symbol}: ${signal.signalType}`);
@@ -232,4 +236,4 @@ if (process.env.NODE_ENV !== 'test') {
   });
 }
 
-export { fetchHeadlines, generateSignal, http, scoreHeadlines };
+export { fetchHeadlines, generateSignal, http, scoreHeadlines, sendNotification };

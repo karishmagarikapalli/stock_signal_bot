@@ -1,311 +1,101 @@
-# Stock Signal Bot - Deployment Guide
+# Standalone Deployment
 
-## Overview
+Only [server/ingestion.mjs](server/ingestion.mjs) and its optional
+[server/scheduler.mjs](server/scheduler.mjs) launcher are supported. Do not deploy
+the preserved Express/tRPC server, UI, or database scaffold. Its server entrypoint
+and authentication context are disabled; no replacement web authentication is
+provided.
 
-This guide explains how to set up and deploy the Stock Signal Bot for continuous, real-time monitoring of stock market signals with minimal latency.
+## Local Setup
 
----
+Use Node.js 20.19+ or a current supported LTS. From the repository root:
 
-## Prerequisites
-
-- **Node.js 18+** installed
-- **Git** for version control
-- **GitHub account** (for Actions-based scheduling)
-- API keys for:
-  - Finnhub (free at https://finnhub.io/register)
-  - MarketAux (free at https://www.marketaux.com/)
-  - ntfy.sh topic (free, no registration needed)
-
----
-
-## Step 1: Get API Keys
-
-### Finnhub API Key
-1. Visit https://finnhub.io/register
-2. Sign up for a free account
-3. Copy your API key from the dashboard
-4. Free tier: 60 API calls/minute, real-time news
-
-### MarketAux API Key
-1. Visit https://www.marketaux.com/
-2. Click "GET FREE API KEY"
-3. Sign up and copy your API key
-4. Free tier: 100 requests/day, sentiment analysis
-
-### ntfy.sh Topic
-1. No registration needed
-2. Choose any topic name (e.g., `stock-signals-YOUR_USERNAME`)
-3. Download the ntfy app on your phone:
-   - **Android**: https://play.google.com/store/apps/details?id=io.ntfy.android
-   - **iOS**: Use web app at https://ntfy.sh or webhooks
-
----
-
-## Step 2: Local Setup
-
-### Clone and Install
-
-```bash
-cd /path/to/stock_signal_bot
-pnpm install
+```powershell
+npm.cmd exec --yes --package=pnpm@10.4.1 -- pnpm install --frozen-lockfile
+npm.cmd exec --yes --package=pnpm@10.4.1 -- pnpm check
+npm.cmd exec --yes --package=pnpm@10.4.1 -- pnpm test
 ```
 
-### Configure Environment Variables
+Use ignored repository-local `.dev.vars` for configuration; safe defaults are in
+[.dev.vars.example](.dev.vars.example). Process environment takes precedence,
+then `.dev.vars`, then legacy `.env`. These files are resolved relative to the
+ingestion module's repository, even when launched from another working directory.
+Global environment changes and `.env.local` are not needed.
 
-Create a `.env.local` file in the project root:
+The local default is `DRY_RUN=1`. Dry-running still fetches live public RSS and
+writes the state file, but does not send notifications or advance dedup timestamps.
 
-```bash
-# API Keys
-FINNHUB_API_KEY=your_finnhub_key_here
-MARKETAUX_API_KEY=your_marketaux_key_here
-NTFY_TOPIC=stock-signals-your-username
-
-# Database (already configured for you)
-DATABASE_URL=mysql://user:password@host/database
-
-# App Configuration
-VITE_APP_TITLE=Stock Signal Bot
-VITE_APP_LOGO=https://example.com/logo.png
-```
-
-### Test the Ingestion Service
-
-```bash
-# Test with default symbols (AAPL, MSFT, GOOGL, TSLA, AMZN)
-node server/ingestion.mjs
-
-# Test with custom symbols
+```powershell
+$env:DRY_RUN = '1'
 node server/ingestion.mjs --symbols AAPL,MSFT,NVDA
 ```
 
-You should see output like:
-```
-[Ingestion] Processing AAPL...
-[Ingestion] AAPL: Finnhub=5, MarketAux=3
-[Ingestion] Signal generated for AAPL: BUY
-[Ingestion] Notification sent for AAPL: BUY
-```
+To enable delivery, first replace the topic placeholder locally, then explicitly
+set `DRY_RUN=0`. Keep topic names and any credentials out of Git and logs. Public
+ntfy topics offer no access control; use a secured server when privacy matters.
+No Finnhub, MarketAux, OAuth, Forge, or database configuration is used by ingestion.
 
-Check your ntfy app for the notification!
+## Repeated Local Runs
 
----
-
-## Step 3: Deployment Options
-
-### Option A: GitHub Actions (Recommended for Free Tier)
-
-GitHub Actions allows you to run scheduled jobs for free.
-
-#### Setup:
-
-1. Push your code to GitHub:
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-git remote add origin https://github.com/YOUR_USERNAME/stock_signal_bot.git
-git push -u origin main
+```powershell
+npm.cmd exec --yes --package=pnpm@10.4.1 -- pnpm start --interval 1800 --symbols AAPL,MSFT,NVDA
 ```
 
-2. Create `.github/workflows/ingestion.yml`:
+The scheduler runs one cycle immediately, then every 1800 seconds by default.
+Use a process supervisor appropriate to your host. Run from a stable working
+directory, because the default `.signal-state.json` path is working-directory
+relative. Set `SIGNAL_STATE_FILE` to a persistent absolute path when necessary.
+Do not run overlapping schedulers against the same state file: writes are not
+locked, and interval callbacks do not prevent overlapping cycles.
 
-```yaml
-name: Stock Signal Ingestion
+## Existing GitHub Actions Workflow
 
-on:
-  schedule:
-    # Run every 2 minutes
-    - cron: '*/2 * * * *'
-  workflow_dispatch:
+The preserved [.github/workflows/ingestion.yml](.github/workflows/ingestion.yml):
 
-jobs:
-  ingest:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      
-      - name: Install dependencies
-        run: pnpm install
-      
-      - name: Run ingestion
-        env:
-          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
-          MARKETAUX_API_KEY: ${{ secrets.MARKETAUX_API_KEY }}
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: node server/ingestion.mjs --symbols AAPL,MSFT,GOOGL,TSLA,AMZN
-```
+- Uses Node 20, pnpm 10.4.1, and frozen-lockfile installation.
+- Runs hourly at minute 17; schedules publish only with exact `LIVE_ALERTS_READY=true` and a nonblank topic secret.
+- Defaults manual executions to dry-run; delivery additionally requires explicit `dry_run=false`.
+- Uses `NTFY_TOPIC` from Actions secrets for publishing.
+- Selects `AAPL,MSFT,NVDA,TSLA,SPY` unless manual symbols are supplied.
+- Overrides thresholds to `0.5`, five scored headlines, and three agreeing publishers.
+- Restores and saves dedup state through Actions cache.
 
-3. Add secrets to GitHub:
-   - Go to Settings → Secrets and variables → Actions
-   - Add: `FINNHUB_API_KEY`, `MARKETAUX_API_KEY`, `NTFY_TOPIC`, `DATABASE_URL`
+The gate reads the repository variable `LIVE_ALERTS_READY` and secret `NTFY_TOPIC`
+without logging the topic. Missing/malformed inputs and unrecognized events fail
+dry. No readiness variable was enabled by this change. Do not enable it until the
+rights, evaluation, and security gates in [RESEARCH_REFRESH.md](RESEARCH_REFRESH.md)
+are reviewed. The variable is an operator attestation, not a measured readiness score.
 
-4. Enable workflows:
-   - Go to Actions tab
-   - Click "I understand my workflows, go ahead and enable them"
+| Event | Readiness exactly `true` + nonblank topic | Manual `dry_run` | Result |
+| --- | --- | --- | --- |
+| Schedule | No | Any | Dry |
+| Schedule | Yes | Not applicable | Delivery permitted |
+| Manual | No | Any | Dry |
+| Manual | Yes | Explicit `false` | Delivery permitted |
+| Manual | Yes | True/missing/malformed | Dry |
+| Other | Any | Any | Dry |
 
-**Advantages:**
-- Completely free
-- No server to maintain
-- Automatic retries on failure
-- Easy to monitor via GitHub UI
+This is only an Actions gate, not a local `DRY_RUN=0` safeguard. A secret topic in
+GitHub is not an ntfy access-control rule. Random public topic names do not
+provide authentication/privacy, and ingestion has no authentication-header support.
+Do not enable a private authenticated deployment without implementing that support.
 
-**Limitations:**
-- GitHub Actions has a 5-minute minimum interval (can use 2-minute via workflow_dispatch)
-- May experience slight delays during peak hours
+Cache restoration is best-effort, not durable transactional storage. Actions scheduling
+can be delayed and concurrent runs can race; neither exact timing nor automatic
+delivery retries are guaranteed.
 
----
+## Monitoring And Limitations
 
-### Option B: Heroku (Free Tier Deprecated)
+Read ingestion logs for feed failures, headline counts, signals, duplicate skips,
+and notification results. A failed delivery returns false and does not update its
+dedup timestamp. It does not make the entire cycle exit unsuccessfully or trigger
+an automatic retry. HTTP 200 is the current success criterion.
 
-Heroku's free tier is no longer available, but you can use paid dynos ($7/month).
+No alert can be normal: thresholds, neutral filtering, and duplicate suppression
+may eliminate every candidate. Check configuration locally without exposing secret
+values. For quota or feed errors, reduce symbols or increase the interval and
+consult the service's current terms. There are no promised latency, hosting-cost,
+accuracy, or investment-return figures.
 
----
-
-### Option C: Self-Hosted (VPS)
-
-If you have a VPS or home server:
-
-```bash
-# Install PM2 for process management
-npm install -g pm2
-
-# Start the scheduler
-pm2 start server/scheduler.mjs --name "stock-signal-bot" -- --interval 120 --symbols AAPL,MSFT,GOOGL,TSLA,AMZN
-
-# Save PM2 config
-pm2 save
-
-# Enable startup on reboot
-pm2 startup
-```
-
----
-
-## Step 4: Monitor and Maintain
-
-### Check Notification History
-
-Visit https://ntfy.sh/YOUR_TOPIC to see all notifications.
-
-### View Signals in Database
-
-The web dashboard (at https://3000-your-domain.manus.space) will show:
-- Recent signals generated
-- Alert history
-- API usage statistics
-- Watched stocks
-
-### Adjust Parameters
-
-Edit `server/services/signalEngine.ts` to tune:
-- `minConfidenceThreshold` - Minimum confidence to generate signal (default: 0.6)
-- `minSourcesRequired` - Minimum sources for corroboration (default: 2)
-- `deduplicationWindow` - Time window to prevent duplicate alerts (default: 1 hour)
-
-### Add/Remove Stocks
-
-Modify the symbols list in your deployment:
-
-**GitHub Actions:**
-```yaml
-run: node server/ingestion.mjs --symbols AAPL,MSFT,NVDA,TSLA,AMD
-```
-
-**Self-hosted:**
-```bash
-pm2 restart stock-signal-bot -- --symbols AAPL,MSFT,NVDA,TSLA,AMD
-```
-
----
-
-## Troubleshooting
-
-### No Notifications Received
-
-1. **Check ntfy topic**: Visit https://ntfy.sh/YOUR_TOPIC
-2. **Verify API keys**: Ensure all keys are correct in environment variables
-3. **Check logs**: 
-   - GitHub Actions: View in Actions tab
-   - Self-hosted: `pm2 logs stock-signal-bot`
-
-### Rate Limit Errors
-
-- Finnhub: 60 calls/minute (free tier) - reduce number of symbols or increase interval
-- MarketAux: 100 requests/day (free tier) - reduce symbols or increase interval
-
-### Database Connection Issues
-
-Ensure `DATABASE_URL` is correct and database is accessible.
-
----
-
-## Performance Optimization
-
-### Latency Targets
-
-- **Data fetch**: ~2 seconds (Finnhub + MarketAux)
-- **Processing**: ~1 second (sentiment analysis, signal generation)
-- **Notification**: ~1 second (ntfy.sh)
-- **Total**: ~4 seconds from news discovery to notification
-
-### Optimization Tips
-
-1. **Reduce symbols**: Fewer symbols = faster processing
-2. **Increase interval**: 5-10 minutes instead of 2 minutes for lower latency
-3. **Filter by market cap**: Only monitor high-volume stocks
-4. **Cache news**: Store recent articles to avoid re-processing
-
----
-
-## Cost Analysis
-
-| Component | Cost | Notes |
-|-----------|------|-------|
-| **Finnhub API** | Free | 60 calls/minute, real-time news |
-| **MarketAux API** | Free | 100 requests/day, sentiment analysis |
-| **ntfy.sh** | Free | Unlimited notifications |
-| **GitHub Actions** | Free | 2,000 minutes/month included |
-| **Database** | Free/Paid | Manus provides free tier |
-| **Total** | **$0/month** | Completely free for personal use |
-
----
-
-## Next Steps
-
-1. **Test locally** with `node server/ingestion.mjs`
-2. **Deploy to GitHub Actions** for continuous monitoring
-3. **Monitor signals** via ntfy app and web dashboard
-4. **Tune parameters** based on signal accuracy
-5. **Add more data sources** (RSS feeds, SEC filings, earnings transcripts)
-
----
-
-## Support
-
-For issues or questions:
-- Check logs: GitHub Actions or PM2
-- Review database: Web dashboard
-- Test API keys: Use curl to test endpoints directly
-- Consult documentation: Finnhub, MarketAux, ntfy.sh
-
----
-
-## Security Notes
-
-- **Never commit API keys** to Git - use environment variables
-- **Use HTTPS** for all API calls (already configured)
-- **Rotate API keys** periodically
-- **Monitor API usage** to detect abuse
-- **Use private GitHub repo** to protect configuration
-
----
-
-## License
-
-This project is for personal use only. Ensure you comply with the terms of service for all APIs used.
+Legacy tests and type checks remain available as diagnostic-only
+`pnpm test:legacy` and `pnpm check:legacy`. They do not certify a deployable web app.

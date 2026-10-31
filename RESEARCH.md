@@ -1,5 +1,9 @@
 # Stock Signal Bot - Research & Architecture
 
+> Superseded research: see [RESEARCH_REFRESH.md](RESEARCH_REFRESH.md), reviewed
+> 2026-10-31, for current source limits, rights gates, evaluation methodology,
+> and alert readiness. Historical claims below are not deployment guarantees.
+
 ## Phase 1: Data Sources & Notification Services Research
 
 ### Executive Summary

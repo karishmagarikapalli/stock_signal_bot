@@ -1,0 +1,19 @@
+{
+  "synthetic": true,
+  "labelProvenance": "Manually authored synthetic labels, not generated from model scores or returns. Not a real benchmark.",
+  "events": [
+    { "id": "gain", "symbol": "EXAMPLE", "text": "Excellent success and strong growth", "label": "positive", "availableAt": "2025-01-02T14:30:00Z" },
+    { "id": "loss", "symbol": "EXAMPLE", "text": "Terrible failure and severe losses", "label": "negative", "availableAt": "2025-01-02T15:30:00Z" },
+    { "id": "calendar", "symbol": "UNKNOWN", "text": "The meeting is on Tuesday", "label": "neutral", "availableAt": "2025-01-02T16:30:00Z" }
+  ],
+  "prices": [
+    { "symbol": "EXAMPLE", "at": "2025-01-02T14:29:00Z", "price": 1 },
+    { "symbol": "EXAMPLE", "at": "2025-01-02T14:31:00Z", "price": 100 },
+    { "symbol": "EXAMPLE", "at": "2025-01-02T15:31:00Z", "price": 110 },
+    { "symbol": "EXAMPLE", "at": "2025-01-02T16:31:00Z", "price": 99 },
+    { "symbol": "MARKET", "at": "2025-01-02T14:31:00Z", "price": 200 },
+    { "symbol": "MARKET", "at": "2025-01-02T15:31:00Z", "price": 204 },
+    { "symbol": "MARKET", "at": "2025-01-02T16:31:00Z", "price": 204 }
+  ],
+  "options": { "horizonsMs": [3600000, 86400000], "maxEntryDelayMs": 60000, "maxExitDelayMs": 0, "benchmarkSymbol": "MARKET" }
+}

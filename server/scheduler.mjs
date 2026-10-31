@@ -5,13 +5,12 @@
  * Runs the ingestion service at regular intervals
  * 
  * Usage:
- *   node scheduler.mjs --interval 120 --symbols AAPL,MSFT,GOOGL
+ *   node server/scheduler.mjs --interval 1800 --symbols AAPL,MSFT,NVDA
  * 
  * Environment variables:
- *   FINNHUB_API_KEY - Finnhub API key
- *   MARKETAUX_API_KEY - MarketAux API key
- *   NTFY_TOPIC - ntfy.sh topic for notifications
- *   DATABASE_URL - Database connection string
+ *   Selected ingestion reads local .dev.vars then legacy .env; process env wins.
+ *   NTFY_TOPIC - ntfy topic for notifications (not required with DRY_RUN=1)
+ *   DRY_RUN - "1" to score without publishing
  */
 
 import { spawn } from 'child_process';
@@ -38,14 +37,14 @@ for (let i = 0; i < args.length; i++) {
 console.log(`[Scheduler] Starting Stock Signal Bot Scheduler`);
 console.log(`[Scheduler] Interval: ${interval} seconds`);
 console.log(`[Scheduler] Symbols: ${symbols.join(', ')}`);
-console.log(`[Scheduler] First run will start in ${interval} seconds...`);
+console.log(`[Scheduler] First run starts immediately...`);
 
 /**
  * Run the ingestion service
  */
 async function runIngestion() {
   return new Promise((resolve, reject) => {
-    const child = spawn('node', [
+    const child = spawn(process.execPath, [
       path.join(__dirname, 'ingestion.mjs'),
       '--symbols', symbols.join(','),
     ], {
